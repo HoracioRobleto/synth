@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitácora de Trading Deriv</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --text-color: #333;
+            --light-bg: #f5f5f5;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .header-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .header-link:hover {
+            background-color: #1a6396;
+            text-decoration: underline;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .info-card {
+            flex: 1;
+            min-width: 180px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-card-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .info-card-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        button.danger {
+            background-color: var(--danger-color);
+        }
+        
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        thead {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        tr.ganada {
+            background-color: rgba(46, 204, 113, 0.15);
+        }
+        
+        tr.perdida {
+            background-color: rgba(231, 76, 60, 0.15);
+        }
+        
+        .stats-summary {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px; /* Altura fija */
+            width: 100%;
+            margin: 20px 0;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Añade esta línea para controlar el desbordamiento */
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 60%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .info-display {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bitácora de Trading Deriv</h1>
+        <a href="index (2).html" class="header-link">Ir a la gestión</a>
+    </header>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-button active" data-tab="operations">Operaciones</button>
+            <button class="tab-button" data-tab="statistics">Estadísticas Detalladas</button>
+        </div>
+        
+        <div id="operations" class="tab-content active">
+            <div class="controls">
+                <button id="newPhaseBtn">Nueva Fase</button>
+                <button id="newOperationBtn">Agregar Operación</button>
+                <button id="generateReportBtn">Generar Reporte PDF</button>
+                <button id="exportDataBtn">Exportar Datos</button>
+                <button id="importDataBtn">Importar Datos</button>
+            </div>
+            <input type="file" id="importFileInput" accept=".json" style="display: none;">
+            <div class="info-display">
+                <div class="info-card">
+                    <div class="info-card-label">Balance Actual:</div>
+                    <div id="balanceValue" class="info-card-value">$0</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-label">Riesgo (5%):</div>
+                    <div id="riskValue" class="info-card-value">$0</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-label">Ganancia (15%):</div>
+                    <div id="profitValue" class="info-card-value">$0</div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="operationsTable">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Activo</th>
+                            <th>Resultado</th>
+                            <th>Monto</th>
+                            <th>Balance Previo</th>
+                            <th>Riesgo</th>
+                            <th>Beneficio</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="operationsTableBody">
+                        <!-- Datos dinámicamente generados -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="statsSummary" class="stats-summary">
+                <!-- Resumen de estadísticas -->
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="balanceChart"></canvas>
+            </div>
+        </div>
+        
+        <div id="statistics" class="tab-content">
+            <h2>Estadísticas Avanzadas</h2>
+            
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-label">Expectativa de Ganancia</div>
+                    <div id="expectancyValue" class="stat-value">$0 por operación</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Drawdown Máximo</div>
+                    <div id="maxDrawdownValue" class="stat-value">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Drawdown Actual</div>
+                    <div id="currentDrawdownValue" class="stat-value">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Factor de Beneficio</div>
+                    <div id="profitFactorValue" class="stat-value">0</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="detailedChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Nueva Fase -->
+    <div id="newPhaseModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Nueva Fase</h2>
+            <form id="newPhaseForm">
+                <div class="form-group">
+                    <label for="phaseName">Nombre de la fase:</label>
+                    <input type="text" id="phaseName" required>
+                </div>
+                <div class="form-group">
+                    <label for="initialBalance">Balance inicial:</label>
+                    <input type="number" id="initialBalance" step="0.01" min="0" required>
+                </div>
+                <button type="submit">Guardar</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para Nueva Operación -->
+    <div id="newOperationModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Nueva Operación</h2>
+            <form id="newOperationForm">
+                <div class="form-group">
+                    <label for="asset">Activo:</label>
+                    <input type="text" id="asset" required>
+                </div>
+                <div class="form-group">
+                    <label for="operationType">Tipo:</label>
+                    <select id="operationType" required>
+                        <option value="Compra">Compra</option>
+                        <option value="Venta">Venta</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Monto ($):</label>
+                    <input type="number" id="amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="risk">Riesgo ($):</label>
+                    <input type="number" id="risk" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="benefit">Beneficio Esperado ($):</label>
+                    <input type="number" id="benefit" step="0.01" required>
+                </div>
+                <button type="submit">Guardar</button>
+            </form>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>&copy; 2025 Bitácora de Trading Deriv</p>
+    </footer>
+
+    <script>
+        // Clase principal de la aplicación
+        class TradingLogApp {
+            constructor() {
+                this.datos = { fases: [] };
+                this.faseActual = null;
+                this.balanceChart = null;
+                this.detailedChart = null;
+                
+                this.inicializarElementosUI();
+                this.configurarEventListeners();
+                this.cargarDatos();
+            }
+            
+            inicializarElementosUI() {
+                // Elementos de los tabs
+                this.tabButtons = document.querySelectorAll('.tab-button');
+                this.tabContents = document.querySelectorAll('.tab-content');
+                
+                // Modales
+                this.newPhaseModal = document.getElementById('newPhaseModal');
+                this.newOperationModal = document.getElementById('newOperationModal');
+                
+                // Formularios
+                this.newPhaseForm = document.getElementById('newPhaseForm');
+                this.newOperationForm = document.getElementById('newOperationForm');
+                
+                // Elementos para mostrar información
+                this.balanceValue = document.getElementById('balanceValue');
+                this.riskValue = document.getElementById('riskValue');
+                this.profitValue = document.getElementById('profitValue');
+                this.operationsTableBody = document.getElementById('operationsTableBody');
+                this.statsSummary = document.getElementById('statsSummary');
+                
+                // Elementos de estadísticas avanzadas
+                this.expectancyValue = document.getElementById('expectancyValue');
+                this.maxDrawdownValue = document.getElementById('maxDrawdownValue');
+                this.currentDrawdownValue = document.getElementById('currentDrawdownValue');
+                this.profitFactorValue = document.getElementById('profitFactorValue');
+                
+                // Elementos de gráficos
+                this.balanceChartCtx = document.getElementById('balanceChart').getContext('2d');
+                this.detailedChartCtx = document.getElementById('detailedChart').getContext('2d');
+            }
+            
+            exportarDatos() {
+                // Convertir los datos a un string JSON
+                const datosJSON = JSON.stringify(this.datos);
+                
+                // Crear un blob con los datos
+                const blob = new Blob([datosJSON], { type: 'application/json' });
+                
+                // Crear una URL para el blob
+                const url = URL.createObjectURL(blob);
+                
+                // Crear un elemento de enlace para la descarga
+                const enlaceDescarga = document.createElement('a');
+                enlaceDescarga.href = url;
+                enlaceDescarga.download = `bitacora_trading_${this.obtenerFechaActualArchivo()}.json`;
+                
+                // Añadir el enlace al documento y hacer clic
+                document.body.appendChild(enlaceDescarga);
+                enlaceDescarga.click();
+                
+                // Limpiar
+                document.body.removeChild(enlaceDescarga);
+                URL.revokeObjectURL(url);
+            }
+
+            // Método para importar datos
+            importarDatos(archivo) {
+                const lector = new FileReader();
+                
+                lector.onload = (evento) => {
+                    try {
+                        // Parsear el contenido del archivo como JSON
+                        const datosImportados = JSON.parse(evento.target.result);
+                        
+                        // Validar estructura básica de los datos
+                        if (!datosImportados.fases || !Array.isArray(datosImportados.fases)) {
+                            throw new Error('Formato de archivo inválido');
+                        }
+                        
+                        // Confirmar la importación
+                        if (confirm('¿Estás seguro de que deseas importar estos datos? Se sobrescribirán todos los datos actuales.')) {
+                            // Guardar los datos importados
+                            this.datos = datosImportados;
+                            
+                            // Establecer la fase actual a la última si hay fases
+                            if (this.datos.fases.length > 0) {
+                                this.faseActual = this.datos.fases[this.datos.fases.length - 1];
+                            } else {
+                                this.faseActual = null;
+                            }
+                            
+                            // Actualizar la interfaz
+                            this.actualizarInformacion();
+                            this.actualizarTabla();
+                            this.actualizarEstadisticasAvanzadas();
+                            this.crearGrafico();
+                            
+                            // Guardar en localStorage para persistencia
+                            this.guardarDatos();
+                            
+                            alert('Datos importados correctamente');
+                        }
+                    } catch (error) {
+                        alert(`Error al importar los datos: ${error.message}`);
+                    }
+                };
+                
+                lector.readAsText(archivo);
+            }
+            
+
+
+            obtenerFechaActualArchivo() {
+                const fecha = new Date();
+                const dia = fecha.getDate().toString().padStart(2, '0');
+                const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+                const anio = fecha.getFullYear();
+                const hora = fecha.getHours().toString().padStart(2, '0');
+                const minutos = fecha.getMinutes().toString().padStart(2, '0');
+                return `${anio}${mes}${dia}_${hora}${minutos}`;
+            }
+
+
+            configurarEventListeners() {
+                // Eventos para los tabs
+                this.tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const tabId = button.getAttribute('data-tab');
+                        this.cambiarTab(tabId);
+                    });
+                });
+                
+                // Eventos para botones principales
+                document.getElementById('newPhaseBtn').addEventListener('click', () => this.mostrarModalNuevaFase());
+                document.getElementById('newOperationBtn').addEventListener('click', () => this.mostrarModalNuevaOperacion());
+                document.getElementById('generateReportBtn').addEventListener('click', () => this.generarReportePDF());
+                document.getElementById('exportDataBtn').addEventListener('click', () => this.exportarDatos());
+                document.getElementById('importDataBtn').addEventListener('click', () => document.getElementById('importFileInput').click());
+                            
+                // Evento para el input de archivo
+                document.getElementById('importFileInput').addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                        this.importarDatos(e.target.files[0]);
+                        // Limpiar el input para permitir seleccionar el mismo archivo múltiples veces
+                        e.target.value = '';
+                    }
+                });
+
+                // Eventos para cerrar modales
+                document.querySelectorAll('.close').forEach(closeBtn => {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.target.closest('.modal').style.display = 'none';
+                    });
+                });
+                
+                // Eventos al enviar formularios
+                this.newPhaseForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.crearNuevaFase();
+                });
+                
+                this.newOperationForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.agregarNuevaOperacion();
+                });
+                
+                // Cerrar modales al hacer clic fuera de ellos
+                window.addEventListener('click', (e) => {
+                    if (e.target === this.newPhaseModal) {
+                        this.newPhaseModal.style.display = 'none';
+                    }
+                    if (e.target === this.newOperationModal) {
+                        this.newOperationModal.style.display = 'none';
+                    }
+                });
+            }
+            
+            cambiarTab(tabId) {
+                this.tabButtons.forEach(button => {
+                    button.classList.remove('active');
+                    if (button.getAttribute('data-tab') === tabId) {
+                        button.classList.add('active');
+                    }
+                });
+                
+                this.tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === tabId) {
+                        content.classList.add('active');
+                    }
+                });
+                
+                // Si cambiamos a la pestaña de estadísticas, actualizamos los gráficos detallados
+                if (tabId === 'statistics') {
+                    this.actualizarGraficoDetallado();
+                }
+            }
+            
+            mostrarModalNuevaFase() {
+                this.newPhaseModal.style.display = 'block';
+            }
+            
+            mostrarModalNuevaOperacion() {
+                if (!this.faseActual) {
+                    alert('Debe crear una fase primero.');
+                    return;
+                }
+                
+                // Establecer valores sugeridos para riesgo y beneficio
+                const balanceActual = this.faseActual.balance_inicial;
+                document.getElementById('risk').value = (balanceActual * 0.05).toFixed(2);
+                document.getElementById('benefit').value = (balanceActual * 0.15).toFixed(2);
+                
+                this.newOperationModal.style.display = 'block';
+            }
+            
+            crearNuevaFase() {
+                const nombre = document.getElementById('phaseName').value;
+                const balance = parseFloat(document.getElementById('initialBalance').value);
+                
+                if (!nombre || isNaN(balance)) {
+                    alert('Por favor complete todos los campos correctamente.');
+                    return;
+                }
+                
+                const nuevaFase = {
+                    nombre: nombre,
+                    inicio: this.obtenerFechaActual(),
+                    balance_inicial: balance,
+                    balance_original: balance,
+                    operaciones: []
+                };
+                
+                this.datos.fases.push(nuevaFase);
+                this.faseActual = nuevaFase;
+                
+                this.actualizarInformacion();
+                this.actualizarTabla();
+                this.guardarDatos();
+                this.crearGrafico();
+                
+                this.newPhaseModal.style.display = 'none';
+                this.newPhaseForm.reset();
+            }
+            
+            agregarNuevaOperacion() {
+                const activo = document.getElementById('asset').value;
+                const tipo = document.getElementById('operationType').value;
+                const monto = parseFloat(document.getElementById('amount').value);
+                const riesgo = parseFloat(document.getElementById('risk').value);
+                const beneficio = parseFloat(document.getElementById('benefit').value);
+                
+                if (!activo || isNaN(monto) || isNaN(riesgo) || isNaN(beneficio)) {
+                    alert('Por favor complete todos los campos correctamente.');
+                    return;
+                }
+                
+                const resultado = monto >= 0 ? 'ganada' : 'perdida';
+                const balancePrevio = this.faseActual.balance_inicial;
+                this.faseActual.balance_inicial += monto;
+                
+                const operacion = {
+                    fecha: this.obtenerFechaActual(),
+                    activo: activo,
+                    tipo: tipo,
+                    resultado: resultado,
+                    monto: monto,
+                    balance_previo: balancePrevio,
+                    riesgo: riesgo,
+                    beneficio: beneficio,
+                    balance: this.faseActual.balance_inicial
+                };
+                
+                this.faseActual.operaciones.push(operacion);
+                
+                this.actualizarInformacion();
+                this.actualizarTabla();
+                this.guardarDatos();
+                this.actualizarEstadisticasAvanzadas();
+                this.crearGrafico();
+                
+                this.newOperationModal.style.display = 'none';
+                this.newOperationForm.reset();
+            }
+            
+            obtenerFechaActual() {
+                const fecha = new Date();
+                const dia = fecha.getDate().toString().padStart(2, '0');
+                const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+                const anio = fecha.getFullYear();
+                return `${dia}/${mes}/${anio}`;
+            }
+            
+            actualizarInformacion() {
+                if (this.faseActual) {
+                    const balance = this.faseActual.balance_inicial;
+                    const riesgo = balance * 0.05;
+                    const ganancia = balance * 0.15;
+                    
+                    this.balanceValue.textContent = `$${balance.toFixed(2)}`;
+                    this.riskValue.textContent = `$${riesgo.toFixed(2)}`;
+                    this.profitValue.textContent = `$${ganancia.toFixed(2)}`;
+                    
+                    this.actualizarEstadisticas();
+                    this.actualizarEstadisticasAvanzadas();
+                }
+            }
+            
+            actualizarTabla() {
+                this.operationsTableBody.innerHTML = '';
+                
+                if (this.faseActual && this.faseActual.operaciones.length > 0) {
+                    this.faseActual.operaciones.forEach(op => {
+                        const row = document.createElement('tr');
+                        row.className = op.resultado; // Aplica la clase 'ganada' o 'perdida'
+                        
+                        row.innerHTML = `
+                            <td>${op.fecha}</td>
+                            <td>${op.tipo}</td>
+                            <td>${op.activo}</td>
+                            <td>${op.resultado}</td>
+                            <td>$${op.monto.toFixed(2)}</td>
+                            <td>$${op.balance_previo.toFixed(2)}</td>
+                            <td>$${op.riesgo.toFixed(2)}</td>
+                            <td>$${op.beneficio.toFixed(2)}</td>
+                            <td>$${op.balance.toFixed(2)}</td>
+                        `;
+                        
+                        this.operationsTableBody.appendChild(row);
+                    });
+                }
+            }
+            
+            actualizarEstadisticas() {
+                if (!this.faseActual) return;
+                
+                const operaciones = this.faseActual.operaciones;
+                const totalOperaciones = operaciones.length;
+                const ganadas = operaciones.filter(op => op.resultado === 'ganada').length;
+                const perdidas = totalOperaciones - ganadas;
+                const balanceInicial = this.faseActual.balance_original;
+                const balanceActual = this.faseActual.balance_inicial;
+                const gananciaUsd = balanceActual - balanceInicial;
+                const gananciaPct = balanceInicial ? (gananciaUsd / balanceInicial) * 100 : 0;
+                const efectividad = totalOperaciones ? (ganadas / totalOperaciones) * 100 : 0;
+                
+                const texto = `
+                    <strong>Total de operaciones:</strong> ${totalOperaciones} | 
+                    <strong>Ganadas:</strong> ${ganadas} | 
+                    <strong>Perdidas:</strong> ${perdidas} | 
+                    <strong>Ganancia:</strong> $${gananciaUsd.toFixed(2)} (${gananciaPct.toFixed(2)}%) | 
+                    <strong>Efectividad:</strong> ${efectividad.toFixed(2)}%
+                `;
+                
+                this.statsSummary.innerHTML = texto;
+            }
+            
+            actualizarEstadisticasAvanzadas() {
+                if (!this.faseActual || !this.faseActual.operaciones.length) return;
+                
+                const operaciones = this.faseActual.operaciones;
+                const balanceInicial = this.faseActual.balance_original;
+                
+                // Calcular expectativa de ganancia
+                const totalGanado = operaciones
+                    .filter(op => op.resultado === 'ganada')
+                    .reduce((sum, op) => sum + op.monto, 0);
+                
+                const totalPerdido = operaciones
+                    .filter(op => op.resultado === 'perdida')
+                    .reduce((sum, op) => sum + Math.abs(op.monto), 0);
+                
+                const ganados = operaciones.filter(op => op.resultado === 'ganada').length;
+                const perdidos = operaciones.filter(op => op.resultado === 'perdida').length;
+                
+                const winProb = ganados / operaciones.length;
+                const avgWin = ganados > 0 ? totalGanado / ganados : 0;
+                const avgLoss = perdidos > 0 ? totalPerdido / perdidos : 0;
+                
+                const expectativa = (winProb * avgWin) - ((1 - winProb) * avgLoss);
+                const factorBeneficio = totalPerdido > 0 ? totalGanado / totalPerdido : Infinity;
+                
+                // Calcular drawdown
+                let balances = [balanceInicial];
+                let balanceAcum = balanceInicial;
+                
+                operaciones.forEach(op => {
+                    balanceAcum += op.monto;
+                    balances.push(balanceAcum);
+                });
+                
+                let maxBalance = balanceInicial;
+                let maxDrawdown = 0;
+                let currentDrawdown = 0;
+                
+                balances.forEach(balance => {
+                    if (balance > maxBalance) {
+                        maxBalance = balance;
+                        currentDrawdown = 0;
+                    } else {
+                        const drawdownPct = maxBalance > 0 ? ((maxBalance - balance) / maxBalance) * 100 : 0;
+                        if (drawdownPct > maxDrawdown) {
+                            maxDrawdown = drawdownPct;
+                        }
+                        currentDrawdown = drawdownPct;
+                    }
+                });
+                
+                // Actualizar UI
+                this.expectancyValue.textContent = `$${expectativa.toFixed(2)} por operación`;
+                this.maxDrawdownValue.textContent = `${maxDrawdown.toFixed(2)}%`;
+                this.currentDrawdownValue.textContent = `${currentDrawdown.toFixed(2)}%`;
+                this.profitFactorValue.textContent = factorBeneficio === Infinity ? '∞' : factorBeneficio.toFixed(2);
+            }
+            
+            crearGrafico() {
+                if (!this.faseActual || !this.faseActual.operaciones.length) return;
+                
+                // Destruir gráfico existente si hay uno
+                if (this.balanceChart) {
+                    this.balanceChart.destroy();
+                }
+                
+                const operaciones = this.faseActual.operaciones;
+                const balanceInicial = this.faseActual.balance_original;
+                
+                // Preparar datos
+                let balances = [balanceInicial];
+                let fechas = ['Inicio'];
+                let balanceAcum = balanceInicial;
+                
+                operaciones.forEach(op => {
+                    balanceAcum += op.monto;
+                    balances.push(balanceAcum);
+                    fechas.push(op.fecha);
+                });
+                
+                // Calcular porcentajes de cambio
+                const porcentajes = balances.map(b => ((b / balanceInicial) - 1) * 100);
+                
+                // Crear nuevo gráfico
+                this.balanceChart = new Chart(this.balanceChartCtx, {
+                    type: 'line',
+                    data: {
+                        labels: fechas,
+			    datasets: [{
+                            label: 'Balance ($)',
+                            data: balances,
+                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            borderColor: 'rgba(52, 152, 219, 1)',
+                            borderWidth: 2,
+                            tension: 0.1
+                        }, {
+                            label: 'Cambio (%)',
+                            data: porcentajes,
+                            backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                            borderColor: 'rgba(46, 204, 113, 1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                            responsive: true,
+                            maintainAspectRatio: false, // Añade esta línea
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    title: {
+                                        display: true,
+                                        text: 'Balance ($)'
+                                    },
+                                    // Añade límites al eje Y
+                                    min: Math.max(0, Math.floor(Math.min(...balances) * 0.95)),
+                                    max: Math.ceil(Math.max(...balances) * 1.05)
+                                },
+                                y1: {
+                                    position: 'right',
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Cambio (%)'
+                                    },
+                                    // Añade límites al eje Y1
+                                    min: Math.floor(Math.min(...porcentajes)),
+                                    max: Math.ceil(Math.max(...porcentajes) * 1.05)
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top'
+                                }
+                            }
+                        }               });
+            }
+            
+            actualizarGraficoDetallado() {
+    if (!this.faseActual || !this.faseActual.operaciones.length) return;
+    
+    // Destruir gráfico detallado existente si hay uno
+    if (this.detailedChart) {
+        this.detailedChart.destroy();
+    }
+    
+    const operaciones = this.faseActual.operaciones;
+    
+    // Calcular datos para el gráfico - modificación importante aquí
+    const datosGanadas = [];
+    const datosPerdidas = [];
+    const fechas = [];
+    
+    operaciones.forEach(op => {
+        fechas.push(op.fecha);
+        if (op.resultado === 'ganada') {
+            datosGanadas.push(op.monto);
+            datosPerdidas.push(null); // Usar null en lugar de 0
+        } else {
+            // Para pérdidas, usar valores positivos para la visualización
+            datosPerdidas.push(Math.abs(op.monto) * -1); // Convertir a negativo para el gráfico
+            datosGanadas.push(null); // Usar null en lugar de 0
+        }
+    });
+    
+    // Crear nuevo gráfico detallado con configuración mejorada
+    this.detailedChart = new Chart(this.detailedChartCtx, {
+        type: 'bar',
+        data: {
+            labels: fechas,
+            datasets: [{
+                label: 'Operaciones Ganadas',
+                data: datosGanadas,
+                backgroundColor: 'rgba(46, 204, 113, 0.5)',
+                borderColor: 'rgba(46, 204, 113, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Operaciones Perdidas',
+                data: datosPerdidas,
+                backgroundColor: 'rgba(231, 76, 60, 0.5)',
+                borderColor: 'rgba(231, 76, 60, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    stacked: false // Cambiar a false
+                },
+                y: {
+                    stacked: false, // Cambiar a false
+                    title: {
+                        display: true,
+                        text: 'Resultado ($)'
+                    },
+                    // Configurar los límites manualmente
+                    suggestedMin: function() {
+                        const minLoss = Math.min(...datosPerdidas.filter(v => v !== null));
+                        return Math.floor(minLoss * 1.1); // Añadir algo de espacio
+                    },
+                    suggestedMax: function() {
+                        const maxWin = Math.max(...datosGanadas.filter(v => v !== null));
+                        return Math.ceil(maxWin * 1.1); // Añadir algo de espacio
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += '$' + Math.abs(context.parsed.y).toFixed(2);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+            
+generarReportePDF() {
+    if (!this.faseActual) {
+        alert('No hay datos para generar un reporte.');
+        return;
+    }
+    
+    // Obtener las imágenes de los gráficos antes de crear el PDF
+    const balanceChartImg = document.getElementById('balanceChart').toDataURL('image/png');
+    const detailedChartImg = document.getElementById('detailedChart').toDataURL('image/png');
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Configuración inicial
+    doc.setFontSize(18);
+    doc.text('Reporte de Trading Deriv', 105, 20, { align: 'center' });
+    
+    // Información de la fase
+    doc.setFontSize(14);
+    doc.text(`Fase: ${this.faseActual.nombre}`, 14, 35);
+    doc.text(`Fecha de inicio: ${this.faseActual.inicio}`, 14, 45);
+    doc.text(`Fecha del reporte: ${this.obtenerFechaActual()}`, 14, 55);
+    
+    // Estadísticas generales
+    doc.setFontSize(16);
+    doc.text('Estadísticas Generales', 14, 70);
+    
+    doc.setFontSize(12);
+    const operaciones = this.faseActual.operaciones;
+    const totalOperaciones = operaciones.length;
+    const ganadas = operaciones.filter(op => op.resultado === 'ganada').length;
+    const perdidas = totalOperaciones - ganadas;
+    const balanceInicial = this.faseActual.balance_original;
+    const balanceActual = this.faseActual.balance_inicial;
+    const gananciaUsd = balanceActual - balanceInicial;
+    const gananciaPct = balanceInicial ? (gananciaUsd / balanceInicial) * 100 : 0;
+    const efectividad = totalOperaciones ? (ganadas / totalOperaciones) * 100 : 0;
+    
+    doc.text(`Balance inicial: $${balanceInicial.toFixed(2)}`, 14, 80);
+    doc.text(`Balance actual: $${balanceActual.toFixed(2)}`, 14, 90);
+    doc.text(`Ganancia: $${gananciaUsd.toFixed(2)} (${gananciaPct.toFixed(2)}%)`, 14, 100);
+    doc.text(`Total de operaciones: ${totalOperaciones}`, 14, 110);
+    doc.text(`Operaciones ganadas: ${ganadas} (${efectividad.toFixed(2)}%)`, 14, 120);
+    doc.text(`Operaciones perdidas: ${perdidas}`, 14, 130);
+    
+    // Gráfico de balance
+    doc.setFontSize(16);
+    doc.text('Evolución del Balance', 14, 145);
+    
+    // Ajustar el tamaño de la imagen para que quepa en la página
+    const imgWidth = 180; // Ancho máximo en la página
+    const imgHeight = 100; // Altura deseada
+    
+    // Añadir imagen del gráfico de balance
+    doc.addImage(balanceChartImg, 'PNG', 15, 150, imgWidth, imgHeight);
+    
+    // Agregar nueva página para estadísticas avanzadas
+    doc.addPage();
+    
+    // Estadísticas avanzadas
+    if (totalOperaciones > 0) {
+        doc.setFontSize(16);
+        doc.text('Estadísticas Avanzadas', 14, 20);
+        
+        // Datos calculados previamente para estadísticas avanzadas
+        const totalGanado = operaciones
+            .filter(op => op.resultado === 'ganada')
+            .reduce((sum, op) => sum + op.monto, 0);
+        
+        const totalPerdido = operaciones
+            .filter(op => op.resultado === 'perdida')
+            .reduce((sum, op) => sum + Math.abs(op.monto), 0);
+        
+        const winProb = ganadas / totalOperaciones;
+        const avgWin = ganadas > 0 ? totalGanado / ganadas : 0;
+        const avgLoss = perdidas > 0 ? totalPerdido / perdidas : 0;
+        
+        const expectativa = (winProb * avgWin) - ((1 - winProb) * avgLoss);
+        const factorBeneficio = totalPerdido > 0 ? totalGanado / totalPerdido : Infinity;
+        
+        doc.setFontSize(12);
+        doc.text(`Expectativa: $${expectativa.toFixed(2)} por operación`, 14, 30);
+        doc.text(`Factor de beneficio: ${factorBeneficio === Infinity ? '∞' : factorBeneficio.toFixed(2)}`, 14, 40);
+        doc.text(`Promedio ganancia: $${avgWin.toFixed(2)}`, 14, 50);
+        doc.text(`Promedio pérdida: $${avgLoss.toFixed(2)}`, 14, 60);
+        
+        // Análisis por operación
+        doc.setFontSize(16);
+        doc.text('Análisis por Operación', 14, 75);
+        
+        // Añadir imagen del gráfico detallado
+        doc.addImage(detailedChartImg, 'PNG', 15, 80, imgWidth, imgHeight);
+    }
+    
+    // Tabla de operaciones
+    if (totalOperaciones > 0) {
+        doc.addPage();
+        doc.setFontSize(16);
+        doc.text('Registro de Operaciones', 14, 20);
+        
+        // Crear tabla de operaciones
+        const headers = [['Fecha', 'Activo', 'Tipo', 'Resultado', 'Monto', 'Balance']];
+        const data = operaciones.map(op => [
+            op.fecha,
+            op.activo,
+            op.tipo,
+            op.resultado,
+            `$${op.monto.toFixed(2)}`,
+            `$${op.balance.toFixed(2)}`
+        ]);
+        
+        doc.autoTable({
+            startY: 30,
+            head: headers,
+            body: data,
+            theme: 'striped',
+            headStyles: { fillColor: [52, 152, 219] }
+        });
+    }
+    
+    // Guardar PDF
+    doc.save(`reporte_trading_${this.obtenerFechaActual().replace(/\//g, '-')}.pdf`);
+}
+            
+            guardarDatos() {
+                localStorage.setItem('tradingLogData', JSON.stringify(this.datos));
+            }
+            
+            cargarDatos() {
+                const datosGuardados = localStorage.getItem('tradingLogData');
+                if (datosGuardados) {
+                    this.datos = JSON.parse(datosGuardados);
+                    
+                    // Establecer la fase actual como la última
+                    if (this.datos.fases.length > 0) {
+                        this.faseActual = this.datos.fases[this.datos.fases.length - 1];
+                        this.actualizarInformacion();
+                        this.actualizarTabla();
+                        this.crearGrafico();
+                    }
+                }
+            }
+        }
+        
+        // Iniciar la aplicación cuando el DOM está cargado
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new TradingLogApp();
+        });
+    </script>
+</body>
+</html>

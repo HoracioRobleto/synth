@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Riesgo para Deriv</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .header-link:hover {
+            background-color: #1a6396;
+            text-decoration: underline;
+        }
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .result-container {
+            margin-top: 2rem;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            border-left: 5px solid var(--success-color);
+        }
+        
+        .result-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            margin: -1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+        
+        .result-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .result-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .result-label {
+            font-weight: 600;
+        }
+        
+        .entry-details {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .instructions {
+            background-color: #e8f4fd;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            list-style-position: inside;
+        }
+        
+        .instructions h3 {
+            color: var(--secondary-color);
+            margin-bottom: 0.8rem;
+        }
+        
+        .instructions li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-text {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--warning-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gestor de Riesgo para Deriv</h1>
+            <div class="subtitle">Calcula el tamaño de lote, stop loss y take profit para índices sintéticos</div>
+            <a href="bitacora.html" class="header-link">Ir a la bitácora</a>
+        </header>
+        
+        <div class="card">
+            <h2>Parámetros de Operación</h2>
+            
+            <div class="form-group">
+                <label for="account-balance">Saldo de la cuenta (USD):</label>
+                <input type="number" id="account-balance" min="1" step="1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="risk-percent">Porcentaje de riesgo (%):</label>
+                <input type="number" id="risk-percent" min="0.1" max="100" step="0.1" value="5" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="reward-percent">Porcentaje de recompensa (%):</label>
+                <input type="number" id="reward-percent" min="0.1" max="100" step="0.1" value="15" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="index-select">Selecciona el índice sintético:</label>
+                <select id="index-select" required>
+                    <option value="">-- Selecciona un índice --</option>
+                    <option value="Boom300">Boom300</option>
+                    <option value="Boom500">Boom500</option>
+                    <option value="Boom1000">Boom1000</option>
+                    <option value="Crash300">Crash300</option>
+                    <option value="Crash500">Crash500</option>
+                    <option value="Crash1000">Crash1000</option>
+                </select>
+            </div>
+            
+            <div id="index-info" class="info-text hidden"></div>
+            
+            <div class="form-group">
+                <label for="entry-points">Número de puntos de entrada:</label>
+                <select id="entry-points" required>
+                    <option value="">-- Selecciona opción --</option>
+                    <option value="1">Un solo punto de entrada</option>
+                    <option value="2">Dos puntos de entrada</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Contenedor para un punto de entrada -->
+        <div id="single-entry" class="card hidden">
+            <h2>Punto de Entrada</h2>
+            
+            <div class="form-group">
+                <label for="entry-price">Precio del punto de entrada:</label>
+                <input type="number" id="entry-price" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="stop-loss-option">Cómo establecer el Stop Loss:</label>
+                <select id="stop-loss-option" required>
+                    <option value="">-- Selecciona opción --</option>
+                    <option value="1">Especificar precio exacto del Stop Loss</option>
+                    <option value="2">Calcular automáticamente según pips desde el punto de entrada</option>
+                </select>
+            </div>
+            
+            <div id="sl-price-container" class="form-group hidden">
+                <label for="stop-loss-price">Precio del Stop Loss:</label>
+                <input type="number" id="stop-loss-price" step="0.01">
+            </div>
+            
+            <div id="sl-pips-container" class="form-group hidden">
+                <label for="stop-loss-pips">Distancia en pips desde el punto de entrada:</label>
+                <input type="number" id="stop-loss-pips" step="0.01" min="0.01">
+            </div>
+            
+            <button id="calculate-single" type="button">Calcular</button>
+        </div>
+        
+        <!-- Contenedor para dos puntos de entrada -->
+        <div id="double-entry" class="card hidden">
+            <h2>Puntos de Entrada</h2>
+            
+            <div id="double-entry-info" class="info-text"></div>
+            
+            <div class="form-group">
+                <label for="p1-price">Precio del punto 1:</label>
+                <input type="number" id="p1-price" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="p2-price">Precio del punto 2:</label>
+                <input type="number" id="p2-price" step="0.01" required>
+            </div>
+            
+            <div id="pips-between" class="hidden info-text">
+                La cantidad de pips entre los puntos de entrada es: <span id="pips-between-value">0</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="stop-loss-option-double">Cómo establecer el Stop Loss:</label>
+                <select id="stop-loss-option-double" required>
+                    <option value="">-- Selecciona opción --</option>
+                    <option value="1">Especificar precio exacto del Stop Loss</option>
+                    <option value="2">Calcular automáticamente según pips desde el punto 2</option>
+                </select>
+            </div>
+            
+            <div id="sl-price-container-double" class="form-group hidden">
+                <label for="stop-loss-price-double">Precio del Stop Loss:</label>
+                <input type="number" id="stop-loss-price-double" step="0.01">
+            </div>
+            
+            <div id="sl-pips-container-double" class="form-group hidden">
+                <label for="stop-loss-pips-double">Distancia en pips desde el punto 2:</label>
+                <input type="number" id="stop-loss-pips-double" step="0.01" min="0.01">
+            </div>
+            
+            <button id="calculate-double" type="button">Calcular</button>
+        </div>
+        
+        <!-- Contenedor de resultados -->
+        <div id="result-container" class="result-container hidden">
+            <!-- Aquí se mostrarán los resultados -->
+        </div>
+    </div>
+
+    <script>
+        // Definición de la clase DerivRiskManager
+        class DerivRiskManager {
+            constructor(accountBalance, riskPercent = 5, rewardPercent = 15) {
+                this.accountBalance = accountBalance;
+                this.riskPercent = riskPercent;
+                this.rewardPercent = rewardPercent;
+                
+                // Información para cada índice sintético
+                this.indexInfo = {
+                    'Boom300': {
+                        'direction': 'buy',
+                        'pipsPerDollar': 1,  // 1 pip a 1 lote = 1 USD
+                        'minLot': 1.0,
+                        'lotPerDollar': 1.0  // 1 lote por 1 USD
+                    },
+                    'Boom500': {
+                        'direction': 'buy',
+                        'pipsPerDollar': 5,  // 5 pips a 0.2 lote = 1 USD
+                        'minLot': 0.2,
+                        'lotPerDollar': 0.2  // 0.2 lote por 1 USD
+                    },
+                    'Boom1000': {
+                        'direction': 'buy',
+                        'pipsPerDollar': 5,  // 5 pips a 0.2 lote = 1 USD
+                        'minLot': 0.2,
+                        'lotPerDollar': 0.2  // 0.2 lote por 1 USD
+                    },
+                    'Crash300': {
+                        'direction': 'sell',
+                        'pipsPerDollar': 2.5,  // 2.5 pips a 0.5 lote = 1.25 USD
+                        'minLot': 0.5,
+                        'lotPerDollar': 0.4  // 0.5 lote por 1.25 USD ~= 0.4 lote por 1 USD
+                    },
+                    'Crash500': {
+                        'direction': 'sell',
+                        'pipsPerDollar': 5,  // 5 pips a 0.2 lote = 1 USD
+                        'minLot': 0.2,
+                        'lotPerDollar': 0.2  // 0.2 lote por 1 USD
+                    },
+                    'Crash1000': {
+                        'direction': 'sell',
+                        'pipsPerDollar': 5,  // 5 pips a 0.2 lote = 1 USD
+                        'minLot': 0.2,
+                        'lotPerDollar': 0.2  // 0.2 lote por 1 USD
+                    }
+                };
+            }
+            
+            calculateStopLossFromPips(indexName, entryPrice, pipsFromEntry) {
+                if (!this.indexInfo[indexName]) {
+                    throw new Error(`Índice no reconocido: ${indexName}`);
+                }
+                
+                const indexData = this.indexInfo[indexName];
+                
+                // Para índices Boom (compra), el stop loss está por debajo del punto de entrada
+                if (indexData.direction === 'buy') {
+                    return parseFloat((entryPrice - pipsFromEntry).toFixed(2));
+                }
+                // Para índices Crash (venta), el stop loss está por encima del punto de entrada
+                else {
+                    return parseFloat((entryPrice + pipsFromEntry).toFixed(2));
+                }
+            }
+            
+            calculateLotSizeForSinglePoint(indexName, entryPrice, stopLossPrice) {
+                if (!this.indexInfo[indexName]) {
+                    throw new Error(`Índice no reconocido: ${indexName}`);
+                }
+                
+                const indexData = this.indexInfo[indexName];
+                
+                // Calcular el riesgo máximo en dinero para la operación
+                const maxRiskAmount = this.accountBalance * (this.riskPercent / 100);
+                
+                // Calcular la diferencia de pips entre el punto de entrada y el stop loss
+                const pipsDifference = Math.abs(entryPrice - stopLossPrice);
+                
+                // Validar la dirección del stop loss según el tipo de índice
+                if (indexData.direction === 'buy') {
+                    if (stopLossPrice >= entryPrice) {
+                        throw new Error(`Para índices Boom, el stop loss (${stopLossPrice}) debe estar por debajo del punto de entrada (${entryPrice})`);
+                    }
+                } else {  // sell
+                    if (stopLossPrice <= entryPrice) {
+                        throw new Error(`Para índices Crash, el stop loss (${stopLossPrice}) debe estar por encima del punto de entrada (${entryPrice})`);
+                    }
+                }
+                
+                // Calcular el tamaño de lote basado en el riesgo
+                // Fórmula: Lote = (Riesgo en USD * PipsPorDolar * LotePorDolar) / Pips en riesgo
+                const lotSize = (maxRiskAmount * indexData.pipsPerDollar * indexData.lotPerDollar) / pipsDifference;
+                
+                // Redondear a 2 decimales para tamaño de lote
+                return parseFloat(lotSize.toFixed(2));
+            }
+            
+            calculateLotSizesForCombinedRisk(indexName, p1Price, p2Price, stopLossPrice) {
+                if (!this.indexInfo[indexName]) {
+                    throw new Error(`Índice no reconocido: ${indexName}`);
+                }
+                
+                const indexData = this.indexInfo[indexName];
+                
+                // Calcular el riesgo máximo en dinero para toda la operación
+                const maxRiskAmount = this.accountBalance * (this.riskPercent / 100);
+                
+                // Calcular la diferencia de pips entre cada punto de entrada y el stop loss
+                const pipsDifferenceP1 = Math.abs(p1Price - stopLossPrice);
+                const pipsDifferenceP2 = Math.abs(p2Price - stopLossPrice);
+                
+                // Validar la dirección del stop loss según el tipo de índice
+                if (indexData.direction === 'buy') {
+                    if (stopLossPrice >= p1Price || stopLossPrice >= p2Price) {
+                        throw new Error(`Para índices Boom, el stop loss (${stopLossPrice}) debe estar por debajo de ambos puntos de entrada`);
+                    }
+                } else {  // sell
+                    if (stopLossPrice <= p1Price || stopLossPrice <= p2Price) {
+                        throw new Error(`Para índices Crash, el stop loss (${stopLossPrice}) debe estar por encima de ambos puntos de entrada`);
+                    }
+                }
+                
+                // Distribuir el riesgo proporcionalmente entre ambos puntos de entrada
+                // basado en la diferencia de pips desde cada punto al stop loss
+                const totalPipsDifference = pipsDifferenceP1 + pipsDifferenceP2;
+                
+                const riskAmountP1 = maxRiskAmount * (pipsDifferenceP1 / totalPipsDifference);
+                const riskAmountP2 = maxRiskAmount * (pipsDifferenceP2 / totalPipsDifference);
+                
+                // Calcular el tamaño de lote para cada punto basado en su porción de riesgo
+                const lotSizeP1 = (riskAmountP1 * indexData.pipsPerDollar * indexData.lotPerDollar) / pipsDifferenceP1;
+                const lotSizeP2 = (riskAmountP2 * indexData.pipsPerDollar * indexData.lotPerDollar) / pipsDifferenceP2;
+                
+                // Redondear a 2 decimales para tamaño de lote
+                return [parseFloat(lotSizeP1.toFixed(2)), parseFloat(lotSizeP2.toFixed(2))];
+            }
+            
+            calculateTakeProfit(indexName, entryPrice, stopLossPrice) {
+                if (!this.indexInfo[indexName]) {
+                    throw new Error(`Índice no reconocido: ${indexName}`);
+                }
+                
+                const indexData = this.indexInfo[indexName];
+                
+                // Calcular la distancia en pips desde la entrada al stop loss
+                const slDistance = Math.abs(entryPrice - stopLossPrice);
+                
+                // Calcular la distancia del take profit según el ratio de riesgo/recompensa
+                const rrRatio = this.rewardPercent / this.riskPercent;
+                const tpDistance = slDistance * rrRatio;
+                
+                // Determinar la dirección del take profit según el tipo de índice
+                let takeProfitPrice;
+                if (indexData.direction === 'buy') {  // Boom indices - Buy
+                    takeProfitPrice = entryPrice + tpDistance;
+                } else {  // Crash indices - Sell
+                    takeProfitPrice = entryPrice - tpDistance;
+                }
+                
+                return parseFloat(takeProfitPrice.toFixed(2));
+            }
+            
+            calculateSinglePosition(indexName, entryPrice, stopLossPrice) {
+                if (!this.indexInfo[indexName]) {
+                    throw new Error(`Índice no reconocido: ${indexName}`);
+                }
+                
+                const indexData = this.indexInfo[indexName];
+                
+                // Validar el punto de precio según el tipo de índice
+                if (indexData.direction === 'buy') {  // Boom indices
+                    if (stopLossPrice >= entryPrice) {
+                        throw new Error(`Para índices Boom, el stop loss (${stopLossPrice}) debe estar por debajo del punto de entrada (${entryPrice})`);
+                    }
+                } else {  // Crash indices
+                    if (stopLossPrice <= entryPrice) {
+                        throw new Error(`Para índices Crash, el stop loss (${stopLossPrice}) debe estar por encima del punto de entrada (${entryPrice})`);
+                    }
+                }
+                
+                // Calcular el tamaño de lote para el punto de entrada
+                const lotSize = this.calculateLotSizeForSinglePoint(indexName, entryPrice, stopLossPrice);
+                
+                // Calcular take profit para el punto de entrada
+                const takeProfit = this.calculateTakeProfit(indexName, entryPrice, stopLossPrice);
+                
+                // Calcular riesgo monetario total (debe ser igual a risk_percent)
+                const totalRiskAmount = this.accountBalance * (this.riskPercent / 100);
+                
+                // Calcular recompensa monetaria potencial total (debe ser igual a reward_percent)
+                const totalRewardAmount = this.accountBalance * (this.rewardPercent / 100);
+                
+                // Calcular ratio riesgo/recompensa
+                const riskRewardRatio = this.rewardPercent / this.riskPercent;
+                
+                // Calcular pips en riesgo y recompensa
+                const pipsAtRisk = Math.abs(entryPrice - stopLossPrice);
+                const pipsReward = Math.abs(entryPrice - takeProfit);
+                
+                // Crear resultado detallado
+                const entryDetail = {
+                    'entryName': "Punto de entrada",
+                    'index': indexName,
+                    'direction': indexData.direction,
+                    'entryPrice': entryPrice,
+                    'stopLoss': stopLossPrice,
+                    'takeProfit': takeProfit,
+                    'lotSize': lotSize,
+                    'pipsAtRisk': parseFloat(pipsAtRisk.toFixed(2)),
+                    'pipsReward': parseFloat(pipsReward.toFixed(2)),
+                };
+                
+                // Información sobre la operación
+                const result = {
+                    'index': indexName,
+                    'direction': indexData.direction,
+                    'totalRiskAmount': parseFloat(totalRiskAmount.toFixed(2)),
+                    'totalRewardAmount': parseFloat(totalRewardAmount.toFixed(2)),
+                    'riskPercent': this.riskPercent,
+                    'rewardPercent': this.rewardPercent,
+                    'riskRewardRatio': parseFloat(riskRewardRatio.toFixed(2)),
+                    'accountBalance': this.accountBalance,
+                    'entryDetail': entryDetail
+                };
+                
+                return result;
+            }
+            
+            calculatePositionsCombined(indexName, p1Price, p2Price, stopLossPrice) {
+                if (!this.indexInfo[indexName]) {
+                    throw new Error(`Índice no reconocido: ${indexName}`);
+                }
+                
+                const indexData = this.indexInfo[indexName];
+                
+                // Validar los puntos de precio según el tipo de índice
+                if (indexData.direction === 'buy') {  // Boom indices
+                    if (p1Price <= p2Price) {
+                        throw new Error(`Para índices Boom, el punto 1 (${p1Price}) debe ser mayor que el punto 2 (${p2Price})`);
+                    }
+                    if (stopLossPrice >= p1Price || stopLossPrice >= p2Price) {
+                        throw new Error(`Para índices Boom, el stop loss (${stopLossPrice}) debe estar por debajo de ambos puntos de entrada`);
+                    }
+                } else {  // Crash indices
+                    if (p1Price >= p2Price) {
+                        throw new Error(`Para índices Crash, el punto 1 (${p1Price}) debe ser menor que el punto 2 (${p2Price})`);
+                    }
+                    if (stopLossPrice <= p1Price || stopLossPrice <= p2Price) {
+                        throw new Error(`Para índices Crash, el stop loss (${stopLossPrice}) debe estar por encima de ambos puntos de entrada`);
+                    }
+                }
+                
+                // Calcular los tamaños de lote para ambos puntos de entrada
+                const [lotSizeP1, lotSizeP2] = this.calculateLotSizesForCombinedRisk(
+                    indexName, p1Price, p2Price, stopLossPrice
+                );
+                
+                // Calcular take profit para cada punto de entrada
+                const tpP1 = this.calculateTakeProfit(indexName, p1Price, stopLossPrice);
+                const tpP2 = this.calculateTakeProfit(indexName, p2Price, stopLossPrice);
+                
+                // Calcular riesgo monetario total (debe ser igual a risk_percent)
+                const totalRiskAmount = this.accountBalance * (this.riskPercent / 100);
+                
+                // Calcular recompensa monetaria potencial total (debe ser igual a reward_percent)
+                const totalRewardAmount = this.accountBalance * (this.rewardPercent / 100);
+                
+                // Calcular ratio riesgo/recompensa
+                const riskRewardRatio = this.rewardPercent / this.riskPercent;
+                
+                // Calcular pips en riesgo y recompensa para cada punto
+                const pipsAtRiskP1 = Math.abs(p1Price - stopLossPrice);
+                const pipsAtRiskP2 = Math.abs(p2Price - stopLossPrice);
+                
+                const pipsRewardP1 = Math.abs(p1Price - tpP1);
+                const pipsRewardP2 = Math.abs(p2Price - tpP2);
+                
+                // Crear resultados detallados para cada punto y el total
+                const entryDetails = [
+                    {
+                        'entryName': "Punto 1",
+                        'index': indexName,
+                        'direction': indexData.direction,
+                        'entryPrice': p1Price,
+                        'stopLoss': stopLossPrice,
+                        'takeProfit': tpP1,
+                        'lotSize': lotSizeP1,
+                        'pipsAtRisk': parseFloat(pipsAtRiskP1.toFixed(2)),
+                        'pipsReward': parseFloat(pipsRewardP1.toFixed(2)),
+                    },
+                    {
+                        'entryName': "Punto 2",
+                        'index': indexName,
+                        'direction': indexData.direction,
+                        'entryPrice': p2Price,
+                        'stopLoss': stopLossPrice,
+                        'takeProfit': tpP2,
+                        'lotSize': lotSizeP2,
+                        'pipsAtRisk': parseFloat(pipsAtRiskP2.toFixed(2)),
+                        'pipsReward': parseFloat(pipsRewardP2.toFixed(2)),
+                    }
+                ];
+                
+                // Información sobre la operación combinada
+                const combinedResult = {
+                    'index': indexName,
+                    'direction': indexData.direction,
+                    'totalRiskAmount': parseFloat(totalRiskAmount.toFixed(2)),
+                    'totalRewardAmount': parseFloat(totalRewardAmount.toFixed(2)),
+                    'riskPercent': this.riskPercent,
+                    'rewardPercent': this.rewardPercent,
+                    'riskRewardRatio': parseFloat(riskRewardRatio.toFixed(2)),
+                    'accountBalance': this.accountBalance,
+                    'entryDetails': entryDetails
+                };
+                
+                return combinedResult;
+            }
+        }
+        
+        // Función para mostrar u ocultar formularios según la opción seleccionada
+        function handleFormVisibility() {
+            const entryPoints = document.getElementById('entry-points').value;
+            const singleEntry = document.getElementById('single-entry');
+            const doubleEntry = document.getElementById('double-entry');
+            
+            // Ocultar ambos formularios primero
+            singleEntry.classList.add('hidden');
+            doubleEntry.classList.add('hidden');
+            
+            // Mostrar el formulario correspondiente según la selección
+            if (entryPoints === '1') {
+                singleEntry.classList.remove('hidden');
+            } else if (entryPoints === '2') {
+                doubleEntry.classList.remove('hidden');
+            }
+        }
+        
+        // Función para mostrar información del índice
+        function showIndexInfo() {
+            const indexName = document.getElementById('index-select').value;
+            const indexInfoElement = document.getElementById('index-info');
+            const doubleEntryInfo = document.getElementById('double-entry-info');
+            
+            if (!indexName) {
+                indexInfoElement.classList.add('hidden');
+                doubleEntryInfo.textContent = '';
+                return;
+            }
+            
+            indexInfoElement.classList.remove('hidden');
+            
+            if (indexName.includes('Boom')) {
+                indexInfoElement.innerHTML = `<strong>Para índices Boom (COMPRA):</strong><br>- El Stop Loss debe estar POR DEBAJO del punto de entrada`;
+                doubleEntryInfo.innerHTML = `<strong>Para índices Boom (COMPRA):</strong><br>- El punto 1 debe ser MAYOR que el punto 2`;
+            } else {
+                indexInfoElement.innerHTML = `<strong>Para índices Crash (VENTA):</strong><br>- El Stop Loss debe estar POR ENCIMA del punto de entrada`;
+                doubleEntryInfo.innerHTML = `<strong>Para índices Crash (VENTA):</strong><br>- El punto 1 debe ser MENOR que el punto 2`;
+            }
+        }
+        
+        // Función para actualizar información de pips entre puntos
+        function updatePipsBetween() {
+            const p1Price = parseFloat(document.getElementById('p1-price').value);
+            const p2Price = parseFloat(document.getElementById('p2-price').value);
+            const pipsBetweenElement = document.getElementById('pips-between');
+            const pipsBetweenValue = document.getElementById('pips-between-value');
+            
+            if (!isNaN(p1Price) && !isNaN(p2Price)) {
+                const pipsDifference = Math.abs(p1Price - p2Price);
+                pipsBetweenValue.textContent = pipsDifference.toFixed(2);
+                pipsBetweenElement.classList.remove('hidden');
+            } else {
+                pipsBetweenElement.classList.add('hidden');
+            }
+        }
+        
+        // Función para mostrar u ocultar opciones de stop loss
+        function handleStopLossOptions(isSingle) {
+            const optionId = isSingle ? 'stop-loss-option' : 'stop-loss-option-double';
+            const priceContainerId = isSingle ? 'sl-price-container' : 'sl-price-container-double';
+            const pipsContainerId = isSingle ? 'sl-pips-container' : 'sl-pips-container-double';
+            
+            const option = document.getElementById(optionId).value;
+            const priceContainer = document.getElementById(priceContainerId);
+            const pipsContainer = document.getElementById(pipsContainerId);
+            
+            // Ocultar ambos contenedores primero
+            priceContainer.classList.add('hidden');
+            pipsContainer.classList.add('hidden');
+            
+            // Mostrar el contenedor correspondiente según la selección
+            if (option === '1') {
+                priceContainer.classList.remove('hidden');
+            } else if (option === '2') {
+                pipsContainer.classList.remove('hidden');
+            }
+        }
+        
+        // Función para generar el HTML de los resultados (un punto)
+        function generateSingleResultHTML(result) {
+            const entry = result.entryDetail;
+            const directionText = entry.direction === 'buy' ? 'COMPRA' : 'VENTA';
+            
+            return `
+                <div class="result-header">
+                    <h2>RESUMEN DE OPERACIÓN - ${result.index} - ${directionText}</h2>
+                </div>
+                
+                <div class="result-section">
+                    <div class="result-row">
+                        <span class="result-label">Balance de cuenta:</span>
+                        <span>${result.accountBalance.toFixed(2)} USD</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Riesgo total:</span>
+                        <span>${result.totalRiskAmount.toFixed(2)} USD (${result.riskPercent}%)</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Recompensa total:</span>
+                        <span>${result.totalRewardAmount.toFixed(2)} USD (${result.rewardPercent}%)</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Ratio R/R:</span>
+                        <span>1:${result.riskRewardRatio}</span>
+                    </div>
+                </div>
+                
+                <div class="entry-details">
+                    <h3>${entry.entryName}</h3>
+                    <div class="result-row">
+                        <span class="result-label">Precio entrada:</span>
+                        <span>${entry.entryPrice}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Stop Loss:</span>
+                        <span>${entry.stopLoss}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Take Profit:</span>
+                        <span>${entry.takeProfit}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Tamaño de lote:</span>
+                        <span>${entry.lotSize}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Pips en riesgo:</span>
+                        <span>${entry.pipsAtRisk}</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Pips en recompensa:</span>
+                        <span>${entry.pipsReward}</span>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <h3>INSTRUCCIONES DE TRADING:</h3>
+                    <ol>
+                        <li>Abrir posición en ${result.index} (${directionText})</li>
+                        <li>Colocar entrada en el precio ${entry.entryPrice}</li>
+                        <li>Usar el tamaño de lote de ${entry.lotSize}</li>
+                        <li>Establecer Stop Loss en ${entry.stopLoss}</li>
+                        <li>Establecer Take Profit en ${entry.takeProfit}</li>
+                    </ol>
+                </div>
+            `;
+        }
+        
+        // Función para generar el HTML de los resultados (dos puntos)
+        function generateDoubleResultHTML(result) {
+            const entries = result.entryDetails;
+            const directionText = result.direction === 'buy' ? 'COMPRA' : 'VENTA';
+            
+            let entryDetailsHTML = '';
+            entries.forEach(entry => {
+                entryDetailsHTML += `
+                    <div class="entry-details">
+                        <h3>${entry.entryName}</h3>
+                        <div class="result-row">
+                            <span class="result-label">Precio entrada:</span>
+                            <span>${entry.entryPrice}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Stop Loss:</span>
+                            <span>${entry.stopLoss}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Take Profit:</span>
+                            <span>${entry.takeProfit}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Tamaño de lote:</span>
+                            <span>${entry.lotSize}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Pips en riesgo:</span>
+                            <span>${entry.pipsAtRisk}</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Pips en recompensa:</span>
+                            <span>${entry.pipsReward}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            return `
+                <div class="result-header">
+                    <h2>RESUMEN DE OPERACIÓN COMBINADA - ${result.index} - ${directionText}</h2>
+                </div>
+                
+                <div class="result-section">
+                    <div class="result-row">
+                        <span class="result-label">Balance de cuenta:</span>
+                        <span>${result.accountBalance.toFixed(2)} USD</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Riesgo total:</span>
+                        <span>${result.totalRiskAmount.toFixed(2)} USD (${result.riskPercent}%)</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Recompensa total:</span>
+                        <span>${result.totalRewardAmount.toFixed(2)} USD (${result.rewardPercent}%)</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Ratio R/R:</span>
+                        <span>1:${result.riskRewardRatio}</span>
+                    </div>
+                </div>
+                
+                ${entryDetailsHTML}
+                
+                <div class="instructions">
+                    <h3>INSTRUCCIONES DE TRADING:</h3>
+                    <ol>
+                        <li>Abrir posición en ${result.index} (${directionText})</li>
+                        <li>Colocar entradas en los precios de Punto 1 y Punto 2</li>
+                        <li>Usar los tamaños de lote especificados para cada punto</li>
+                        <li>Establecer un solo Stop Loss en ${entries[0].stopLoss}</li>
+                        <li>Establecer Take Profit en ambos puntos según lo indicado</li>
+                    </ol>
+                </div>
+            `;
+        }
+        
+        // Función para calcular y mostrar resultados (un punto)
+        function calculateSingle() {
+            try {
+                // Obtener valores del formulario
+                const accountBalance = parseFloat(document.getElementById('account-balance').value);
+                const riskPercent = parseFloat(document.getElementById('risk-percent').value);
+                const rewardPercent = parseFloat(document.getElementById('reward-percent').value);
+                const indexName = document.getElementById('index-select').value;
+                const entryPrice = parseFloat(document.getElementById('entry-price').value);
+                
+                let stopLossPrice;
+                const stopLossOption = document.getElementById('stop-loss-option').value;
+                
+                // Crear instancia del gestor de riesgo
+                const riskManager = new DerivRiskManager(accountBalance, riskPercent, rewardPercent);
+                
+                // Calcular stop loss según la opción seleccionada
+                if (stopLossOption === '1') {
+                    stopLossPrice = parseFloat(document.getElementById('stop-loss-price').value);
+                } else {
+                    const pipsFromEntry = parseFloat(document.getElementById('stop-loss-pips').value);
+                    stopLossPrice = riskManager.calculateStopLossFromPips(indexName, entryPrice, pipsFromEntry);
+                }
+                
+                // Calcular los detalles de la operación
+                const result = riskManager.calculateSinglePosition(indexName, entryPrice, stopLossPrice);
+                
+                // Mostrar resultados
+                const resultContainer = document.getElementById('result-container');
+                resultContainer.innerHTML = generateSingleResultHTML(result);
+                resultContainer.classList.remove('hidden');
+                
+                // Desplazarse a los resultados
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+        
+        // Función para calcular y mostrar resultados (dos puntos)
+        function calculateDouble() {
+            try {
+                // Obtener valores del formulario
+                const accountBalance = parseFloat(document.getElementById('account-balance').value);
+                const riskPercent = parseFloat(document.getElementById('risk-percent').value);
+                const rewardPercent = parseFloat(document.getElementById('reward-percent').value);
+                const indexName = document.getElementById('index-select').value;
+                const p1Price = parseFloat(document.getElementById('p1-price').value);
+                const p2Price = parseFloat(document.getElementById('p2-price').value);
+                
+                let stopLossPrice;
+                const stopLossOption = document.getElementById('stop-loss-option-double').value;
+                
+                // Crear instancia del gestor de riesgo
+                const riskManager = new DerivRiskManager(accountBalance, riskPercent, rewardPercent);
+                
+                // Calcular stop loss según la opción seleccionada
+                if (stopLossOption === '1') {
+                    stopLossPrice = parseFloat(document.getElementById('stop-loss-price-double').value);
+                } else {
+                    const pipsFromP2 = parseFloat(document.getElementById('stop-loss-pips-double').value);
+                    stopLossPrice = riskManager.calculateStopLossFromPips(indexName, p2Price, pipsFromP2);
+                }
+                
+                // Calcular los detalles de la operación
+                const result = riskManager.calculatePositionsCombined(indexName, p1Price, p2Price, stopLossPrice);
+                
+                // Mostrar resultados
+                const resultContainer = document.getElementById('result-container');
+                resultContainer.innerHTML = generateDoubleResultHTML(result);
+                resultContainer.classList.remove('hidden');
+                
+                // Desplazarse a los resultados
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+        
+        // Configurar eventos cuando el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Eventos para cambios de selección
+            document.getElementById('entry-points').addEventListener('change', handleFormVisibility);
+            document.getElementById('index-select').addEventListener('change', showIndexInfo);
+            document.getElementById('stop-loss-option').addEventListener('change', () => handleStopLossOptions(true));
+            document.getElementById('stop-loss-option-double').addEventListener('change', () => handleStopLossOptions(false));
+            
+            // Eventos para cálculos de pips entre puntos
+            document.getElementById('p1-price').addEventListener('input', updatePipsBetween);
+            document.getElementById('p2-price').addEventListener('input', updatePipsBetween);
+            
+            // Eventos para botones de cálculo
+            document.getElementById('calculate-single').addEventListener('click', calculateSingle);
+            document.getElementById('calculate-double').addEventListener('click', calculateDouble);
+        });
+    </script>
+</body>
+</html>
+
