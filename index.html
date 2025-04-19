@@ -981,7 +981,22 @@
             // Eventos para botones de cálculo
             document.getElementById('calculate-single').addEventListener('click', calculateSingle);
             document.getElementById('calculate-double').addEventListener('click', calculateDouble);
+
+            const balance = localStorage.getItem('currentBalance');
+        
+            // Elemento donde quieres mostrar el balance (ajusta el selector según tu HTML)
+            const balanceInput = document.getElementById('account-balance');
+            
+            if (balanceInput) {
+                if (balance) {
+                    
+                    document.getElementById('account-balance').value =  `${parseFloat(balance).toFixed(2)}`;
+                } else {
+                    document.getElementById('account-balance').value = '';
+                }
+            }
         });
+      
     </script>
 </body>
 </html>

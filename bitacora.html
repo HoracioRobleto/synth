@@ -289,19 +289,177 @@
             color: #666;
         }
         
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-            }
-            
-            .info-display {
-                flex-direction: column;
-            }
-            
-            .modal-content {
-                width: 90%;
-            }
-        }
+        /* Añade o reemplaza estas reglas CSS en la sección de estilos de tu página */
+
+/* Ajustes generales para mejorar la responsividad */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    header {
+        padding: 15px 0;
+    }
+    
+    header h1 {
+        font-size: 1.8rem;
+    }
+    
+    /* Ajustes para los controles */
+    .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    button {
+        width: 100%;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    /* Ajustes para las tarjetas de información */
+    .info-display {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .info-card {
+        width: 100%;
+    }
+    
+    /* Ajustes para las tablas */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 800px; /* Asegura que la tabla no se comprima demasiado */
+    }
+    
+    th, td {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+    
+    /* Ajustes para los modales */
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+        padding: 15px;
+    }
+    
+    .form-group {
+        margin-bottom: 10px;
+    }
+    
+    /* Ajustes para las estadísticas */
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        height: 300px;
+        padding: 10px;
+    }
+    
+    /* Ajustes para las tabs */
+    .tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab-button {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Ajustes específicos para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .controls {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-display {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-summary {
+        font-size: 0.85rem;
+    }
+    
+    header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}
+
+/* Mejoras generales para la experiencia táctil */
+button, 
+input[type="text"], 
+input[type="number"], 
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
+}
+
+input[type="text"], 
+input[type="number"], 
+select {
+    font-size: 16px; /* Previene el zoom en iOS */
+}
+
+/* Añadir deslizamiento suave */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Mejorar la visibilidad de los elementos focusables */
+button:focus, 
+input:focus, 
+select:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Añadir un indicador visual para elementos arrastables */
+.table-container::-webkit-scrollbar {
+    height: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+
+/* Añadir un indicador visual para tablas horizontales */
+.table-container::after {
+    content: "← Desliza →";
+    display: block;
+    text-align: center;
+    padding: 5px;
+    color: #666;
+    font-size: 0.8rem;
+}
+
+@media (min-width: 769px) {
+    .table-container::after {
+        display: none;
+    }
+}
     </style>
 </head>
 <body>
@@ -498,8 +656,48 @@
                 // Elementos de gráficos
                 this.balanceChartCtx = document.getElementById('balanceChart').getContext('2d');
                 this.detailedChartCtx = document.getElementById('detailedChart').getContext('2d');
+                // Detectar si es dispositivo móvil para ajustes adicionales
+                this.isMobile = window.innerWidth <= 768;
+                
+                // Añadir listener para detectar cambios de tamaño de pantalla
+                window.addEventListener('resize', () => {
+                    const wasMobile = this.isMobile;
+                    this.isMobile = window.innerWidth <= 768;
+                    
+                    // Si cambió el estado (de móvil a escritorio o viceversa)
+                    if (wasMobile !== this.isMobile) {
+                        this.ajustarInterfazSegunDispositivo();
+                    }
+                });
+                
+                // Realizar ajustes iniciales
+                this.ajustarInterfazSegunDispositivo();
             }
-            
+            ajustarInterfazSegunDispositivo() {
+    if (this.isMobile) {
+        // Ajustes para móviles
+        if (this.balanceChart) {
+            this.balanceChart.options.plugins.legend.display = false;
+            this.balanceChart.update();
+        }
+        
+        if (this.detailedChart) {
+            this.detailedChart.options.plugins.legend.display = false;
+            this.detailedChart.update();
+        }
+    } else {
+        // Ajustes para escritorio
+        if (this.balanceChart) {
+            this.balanceChart.options.plugins.legend.display = true;
+            this.balanceChart.update();
+        }
+        
+        if (this.detailedChart) {
+            this.detailedChart.options.plugins.legend.display = true;
+            this.detailedChart.update();
+        }
+    }
+}
             exportarDatos() {
                 // Convertir los datos a un string JSON
                 const datosJSON = JSON.stringify(this.datos);
@@ -634,6 +832,58 @@
                         this.newOperationModal.style.display = 'none';
                     }
                 });
+
+                // Soporte para gestos táctiles en tabs
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    const tabsContainer = document.querySelector('.tabs');
+    const tabContentsContainer = document.querySelector('.container');
+    
+    tabContentsContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, false);
+    
+    tabContentsContainer.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        this.handleSwipe();
+    }, false);
+    
+    // Añadir método para manejar el deslizamiento
+    this.handleSwipe = function() {
+        const swipeThreshold = 100; // Umbral mínimo para considerar un deslizamiento
+        if (touchEndX < touchStartX - swipeThreshold) {
+            // Deslizamiento a la izquierda (siguiente tab)
+            this.cambiarANextTab();
+        }
+        
+        if (touchEndX > touchStartX + swipeThreshold) {
+            // Deslizamiento a la derecha (tab anterior)
+            this.cambiarAPrevTab();
+        }
+    };
+    
+    // Método para cambiar al siguiente tab
+    this.cambiarANextTab = function() {
+        const activeTabButton = document.querySelector('.tab-button.active');
+        const nextTabButton = activeTabButton.nextElementSibling;
+        
+        if (nextTabButton && nextTabButton.classList.contains('tab-button')) {
+            const tabId = nextTabButton.getAttribute('data-tab');
+            this.cambiarTab(tabId);
+        }
+    };
+    
+    // Método para cambiar al tab anterior
+    this.cambiarAPrevTab = function() {
+        const activeTabButton = document.querySelector('.tab-button.active');
+        const prevTabButton = activeTabButton.previousElementSibling;
+        
+        if (prevTabButton && prevTabButton.classList.contains('tab-button')) {
+            const tabId = prevTabButton.getAttribute('data-tab');
+            this.cambiarTab(tabId);
+        }
+    };
             }
             
             cambiarTab(tabId) {
@@ -882,6 +1132,7 @@
                     this.balanceChart.destroy();
                 }
                 
+                
                 const operaciones = this.faseActual.operaciones;
                 const balanceInicial = this.faseActual.balance_original;
                 
@@ -901,59 +1152,76 @@
                 
                 // Crear nuevo gráfico
                 this.balanceChart = new Chart(this.balanceChartCtx, {
-                    type: 'line',
-                    data: {
-                        labels: fechas,
-			    datasets: [{
-                            label: 'Balance ($)',
-                            data: balances,
-                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                            borderColor: 'rgba(52, 152, 219, 1)',
-                            borderWidth: 2,
-                            tension: 0.1
-                        }, {
-                            label: 'Cambio (%)',
-                            data: porcentajes,
-                            backgroundColor: 'rgba(46, 204, 113, 0.2)',
-                            borderColor: 'rgba(46, 204, 113, 1)',
-                            borderWidth: 2,
-                            tension: 0.1,
-                            yAxisID: 'y1'
-                        }]
+        type: 'line',
+        data: {
+            labels: fechas,
+            datasets: [{
+                label: 'Balance ($)',
+                data: balances,
+                borderColor: 'rgba(52, 152, 219, 1)',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1
+            }, {
+                label: 'Variación (%)',
+                data: porcentajes,
+                borderColor: 'rgba(46, 204, 113, 1)',
+                backgroundColor: 'rgba(46, 204, 113, 0)',
+                borderWidth: 2,
+                yAxisID: 'y1',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: !this.isMobile,
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        maxRotation: this.isMobile ? 45 : 0,
+                        autoSkip: true,
+                        maxTicksLimit: this.isMobile ? 6 : 10
+                    }
+                },
+                y: {
+                    title: {
+                        display: !this.isMobile,
+                        text: 'Balance ($)'
+                    }
+                },
+                y1: {
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
                     },
-                    options: {
-                            responsive: true,
-                            maintainAspectRatio: false, // Añade esta línea
-                            scales: {
-                                y: {
-                                    beginAtZero: false,
-                                    title: {
-                                        display: true,
-                                        text: 'Balance ($)'
-                                    },
-                                    // Añade límites al eje Y
-                                    min: Math.max(0, Math.floor(Math.min(...balances) * 0.95)),
-                                    max: Math.ceil(Math.max(...balances) * 1.05)
-                                },
-                                y1: {
-                                    position: 'right',
-                                    beginAtZero: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Cambio (%)'
-                                    },
-                                    // Añade límites al eje Y1
-                                    min: Math.floor(Math.min(...porcentajes)),
-                                    max: Math.ceil(Math.max(...porcentajes) * 1.05)
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'top'
-                                }
-                            }
-                        }               });
+                    title: {
+                        display: !this.isMobile,
+                        text: 'Variación (%)'
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
             }
+        }
+    });
+    
+    // Aplicar ajustes adicionales según dispositivo
+    this.ajustarInterfazSegunDispositivo();
+}
             
             actualizarGraficoDetallado() {
     if (!this.faseActual || !this.faseActual.operaciones.length) return;
@@ -1049,131 +1317,108 @@
 }
             
 generarReportePDF() {
-    if (!this.faseActual) {
-        alert('No hay datos para generar un reporte.');
+    // Importar la biblioteca si no está ya disponible
+    if (typeof jspdf === 'undefined' || typeof jspdf.jsPDF === 'undefined') {
+        alert('Cargando módulo de PDF. Por favor, intente de nuevo en unos segundos.');
         return;
     }
     
-    // Obtener las imágenes de los gráficos antes de crear el PDF
-    const balanceChartImg = document.getElementById('balanceChart').toDataURL('image/png');
-    const detailedChartImg = document.getElementById('detailedChart').toDataURL('image/png');
-    
+    // Crear nuevo documento PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    // Configuración inicial
-    doc.setFontSize(18);
-    doc.text('Reporte de Trading Deriv', 105, 20, { align: 'center' });
+    // Configuraciones básicas
+    const margin = 15;
+    let y = margin;
     
-    // Información de la fase
-    doc.setFontSize(14);
-    doc.text(`Fase: ${this.faseActual.nombre}`, 14, 35);
-    doc.text(`Fecha de inicio: ${this.faseActual.inicio}`, 14, 45);
-    doc.text(`Fecha del reporte: ${this.obtenerFechaActual()}`, 14, 55);
-    
-    // Estadísticas generales
+    // Añadir título
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
-    doc.text('Estadísticas Generales', 14, 70);
+    doc.text('Bitácora de Trading Deriv', margin, y);
+    y += 10;
     
-    doc.setFontSize(12);
-    const operaciones = this.faseActual.operaciones;
-    const totalOperaciones = operaciones.length;
-    const ganadas = operaciones.filter(op => op.resultado === 'ganada').length;
-    const perdidas = totalOperaciones - ganadas;
-    const balanceInicial = this.faseActual.balance_original;
-    const balanceActual = this.faseActual.balance_inicial;
-    const gananciaUsd = balanceActual - balanceInicial;
-    const gananciaPct = balanceInicial ? (gananciaUsd / balanceInicial) * 100 : 0;
-    const efectividad = totalOperaciones ? (ganadas / totalOperaciones) * 100 : 0;
-    
-    doc.text(`Balance inicial: $${balanceInicial.toFixed(2)}`, 14, 80);
-    doc.text(`Balance actual: $${balanceActual.toFixed(2)}`, 14, 90);
-    doc.text(`Ganancia: $${gananciaUsd.toFixed(2)} (${gananciaPct.toFixed(2)}%)`, 14, 100);
-    doc.text(`Total de operaciones: ${totalOperaciones}`, 14, 110);
-    doc.text(`Operaciones ganadas: ${ganadas} (${efectividad.toFixed(2)}%)`, 14, 120);
-    doc.text(`Operaciones perdidas: ${perdidas}`, 14, 130);
-    
-    // Gráfico de balance
-    doc.setFontSize(16);
-    doc.text('Evolución del Balance', 14, 145);
-    
-    // Ajustar el tamaño de la imagen para que quepa en la página
-    const imgWidth = 180; // Ancho máximo en la página
-    const imgHeight = 100; // Altura deseada
-    
-    // Añadir imagen del gráfico de balance
-    doc.addImage(balanceChartImg, 'PNG', 15, 150, imgWidth, imgHeight);
-    
-    // Agregar nueva página para estadísticas avanzadas
-    doc.addPage();
-    
-    // Estadísticas avanzadas
-    if (totalOperaciones > 0) {
-        doc.setFontSize(16);
-        doc.text('Estadísticas Avanzadas', 14, 20);
-        
-        // Datos calculados previamente para estadísticas avanzadas
-        const totalGanado = operaciones
-            .filter(op => op.resultado === 'ganada')
-            .reduce((sum, op) => sum + op.monto, 0);
-        
-        const totalPerdido = operaciones
-            .filter(op => op.resultado === 'perdida')
-            .reduce((sum, op) => sum + Math.abs(op.monto), 0);
-        
-        const winProb = ganadas / totalOperaciones;
-        const avgWin = ganadas > 0 ? totalGanado / ganadas : 0;
-        const avgLoss = perdidas > 0 ? totalPerdido / perdidas : 0;
-        
-        const expectativa = (winProb * avgWin) - ((1 - winProb) * avgLoss);
-        const factorBeneficio = totalPerdido > 0 ? totalGanado / totalPerdido : Infinity;
-        
+    // Añadir info de la fase
+    if (this.faseActual) {
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(12);
-        doc.text(`Expectativa: $${expectativa.toFixed(2)} por operación`, 14, 30);
-        doc.text(`Factor de beneficio: ${factorBeneficio === Infinity ? '∞' : factorBeneficio.toFixed(2)}`, 14, 40);
-        doc.text(`Promedio ganancia: $${avgWin.toFixed(2)}`, 14, 50);
-        doc.text(`Promedio pérdida: $${avgLoss.toFixed(2)}`, 14, 60);
-        
-        // Análisis por operación
-        doc.setFontSize(16);
-        doc.text('Análisis por Operación', 14, 75);
-        
-        // Añadir imagen del gráfico detallado
-        doc.addImage(detailedChartImg, 'PNG', 15, 80, imgWidth, imgHeight);
+        doc.text(`Fase: ${this.faseActual.nombre}`, margin, y);
+        y += 7;
+        doc.text(`Inicio: ${this.faseActual.inicio}`, margin, y);
+        y += 7;
+        doc.text(`Balance inicial: $${this.faseActual.balance_original.toFixed(2)}`, margin, y);
+        y += 7;
+        doc.text(`Balance actual: $${this.faseActual.balance_inicial.toFixed(2)}`, margin, y);
+        y += 15;
     }
     
-    // Tabla de operaciones
-    if (totalOperaciones > 0) {
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.text('Registro de Operaciones', 14, 20);
+    // Añadir resumen de estadísticas
+    if (this.faseActual && this.faseActual.operaciones.length > 0) {
+        const operaciones = this.faseActual.operaciones;
+        const totalOperaciones = operaciones.length;
+        const ganadas = operaciones.filter(op => op.resultado === 'ganada').length;
+        const perdidas = totalOperaciones - ganadas;
+        const balanceInicial = this.faseActual.balance_original;
+        const balanceActual = this.faseActual.balance_inicial;
+        const gananciaUsd = balanceActual - balanceInicial;
+        const gananciaPct = balanceInicial ? (gananciaUsd / balanceInicial) * 100 : 0;
+        const efectividad = totalOperaciones ? (ganadas / totalOperaciones) * 100 : 0;
         
-        // Crear tabla de operaciones
-        const headers = [['Fecha', 'Activo', 'Tipo', 'Resultado', 'Monto', 'Balance']];
-        const data = operaciones.map(op => [
-            op.fecha,
-            op.activo,
-            op.tipo,
-            op.resultado,
-            `$${op.monto.toFixed(2)}`,
-            `$${op.balance.toFixed(2)}`
-        ]);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Resumen de Estadísticas", margin, y);
+        y += 7;
         
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Total de operaciones: ${totalOperaciones}`, margin, y);
+        y += 7;
+        doc.text(`Ganadas: ${ganadas} - Perdidas: ${perdidas}`, margin, y);
+        y += 7;
+        doc.text(`Ganancia: $${gananciaUsd.toFixed(2)} (${gananciaPct.toFixed(2)}%)`, margin, y);
+        y += 7;
+        doc.text(`Efectividad: ${efectividad.toFixed(2)}%`, margin, y);
+        y += 15;
+    }
+    
+    // Añadir tabla de operaciones
+    if (this.faseActual && this.faseActual.operaciones.length > 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.text("Operaciones", margin, y);
+        y += 10;
+        
+        // Configurar columnas adaptadas para móvil (menos columnas)
+        const columns = this.isMobile ? 
+            [['Fecha', 'Activo', 'Resultado', 'Monto', 'Balance']] :
+            [['Fecha', 'Tipo', 'Activo', 'Resultado', 'Monto', 'Balance Previo', 'Balance']];
+        
+        // Preparar datos para la tabla
+        const data = this.faseActual.operaciones.map(op => {
+            return this.isMobile ? 
+                [op.fecha, op.activo, op.resultado, `$${op.monto.toFixed(2)}`, `$${op.balance.toFixed(2)}`] :
+                [op.fecha, op.tipo, op.activo, op.resultado, `$${op.monto.toFixed(2)}`, `$${op.balance_previo.toFixed(2)}`, `$${op.balance.toFixed(2)}`];
+        });
+        
+        // Generar tabla
         doc.autoTable({
-            startY: 30,
-            head: headers,
+            head: columns,
             body: data,
-            theme: 'striped',
-            headStyles: { fillColor: [52, 152, 219] }
+            startY: y,
+            margin: {left: margin, right: margin},
+            styles: {fontSize: this.isMobile ? 8 : 10},
+            headStyles: {fillColor: [52, 152, 219]},
+            alternateRowStyles: {fillColor: [240, 240, 240]}
         });
     }
     
     // Guardar PDF
-    doc.save(`reporte_trading_${this.obtenerFechaActual().replace(/\//g, '-')}.pdf`);
-}
-            
+    const fechaArchivo = this.obtenerFechaActualArchivo();
+    doc.save(`bitacora_trading_${fechaArchivo}.pdf`);
+}            
             guardarDatos() {
                 localStorage.setItem('tradingLogData', JSON.stringify(this.datos));
+
+                  // Añadir esta línea para guardar el balance actual por separado
+                    if (this.faseActual) {
+                            localStorage.setItem('currentBalance', this.faseActual.balance_inicial);
+                        }
             }
             
             cargarDatos() {
